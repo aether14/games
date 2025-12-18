@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>じゃんけんゲーム</title>
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --accent-win: #00d9ff;
+            --accent-lose: #ff6b6b;
+            --accent-draw: #ffd93d;
+            --text-primary: #eaeaea;
+            --text-secondary: #a0a0a0;
+        }
+
+        body {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            background: var(--bg-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* 背景アニメーション */
+        .background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(0, 217, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 107, 107, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(255, 217, 61, 0.05) 0%, transparent 70%),
+                var(--bg-primary);
+        }
+
+        .floating-shape {
+            position: absolute;
+            opacity: 0.1;
+            animation: float 20s infinite ease-in-out;
+        }
+
+        .floating-shape:nth-child(1) {
+            top: 10%;
+            left: 10%;
+            font-size: 80px;
+            animation-delay: 0s;
+        }
+
+        .floating-shape:nth-child(2) {
+            top: 60%;
+            right: 15%;
+            font-size: 100px;
+            animation-delay: -5s;
+        }
+
+        .floating-shape:nth-child(3) {
+            bottom: 20%;
+            left: 20%;
+            font-size: 60px;
+            animation-delay: -10s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-20px) rotate(5deg); }
+            50% { transform: translateY(0) rotate(0deg); }
+            75% { transform: translateY(20px) rotate(-5deg); }
+        }
+
+        .game-container {
+            background: linear-gradient(145deg, var(--bg-secondary), #0f1729);
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            animation: slideUp 0.8s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            color: var(--text-primary);
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin-bottom: 10px;
+            text-shadow: 0 0 30px rgba(0, 217, 255, 0.3);
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin-bottom: 30px;
+        }
+
+        /* スコアボード */
+        .scoreboard {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .score-item {
+            text-align: center;
+        }
+
+        .score-label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+        }
+
+        .score-value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .score-value.wins { color: var(--accent-win); }
+        .score-value.losses { color: var(--accent-lose); }
+        .score-value.draws { color: var(--accent-draw); }
+
+        /* バトルエリア */
+        .battle-area {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin-bottom: 30px;
+            min-height: 140px;
+        }
+
+        .player-side, .computer-side {
+            text-align: center;
+        }
+
+        .side-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .hand-display {
+            font-size: 70px;
+            height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease;
+        }
+
+        .hand-display.shake {
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateY(0); }
+            25% { transform: translateY(-15px); }
+            50% { transform: translateY(0); }
+            75% { transform: translateY(-10px); }
+        }
+
+        .vs-text {
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        /* 結果表示 */
+        .result {
+            font-size: 2rem;
+            font-weight: 900;
+            margin-bottom: 30px;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .result.win {
+            color: var(--accent-win);
+            text-shadow: 0 0 20px rgba(0, 217, 255, 0.5);
+            animation: pulse 0.5s ease-out;
+        }
+
+        .result.lose {
+            color: var(--accent-lose);
+            text-shadow: 0 0 20px rgba(255, 107, 107, 0.5);
+            animation: pulse 0.5s ease-out;
+        }
+
+        .result.draw {
+            color: var(--accent-draw);
+            text-shadow: 0 0 20px rgba(255, 217, 61, 0.5);
+            animation: pulse 0.5s ease-out;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* ボタン */
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .hand-btn {
+            width: 100px;
+            height: 100px;
+            border-radius: 20px;
+            border: 3px solid transparent;
+            background: linear-gradient(145deg, #2a2a4a, #1a1a35);
+            cursor: pointer;
+            font-size: 50px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .hand-btn:hover {
+            transform: translateY(-5px) scale(1.05);
+            border-color: var(--accent-win);
+            box-shadow: 
+                0 12px 30px rgba(0, 0, 0, 0.4),
+                0 0 20px rgba(0, 217, 255, 0.3);
+        }
+
+        .hand-btn:active {
+            transform: translateY(0) scale(0.95);
+        }
+
+        .hand-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .hand-btn span {
+            display: block;
+        }
+
+        /* リセットボタン */
+        .reset-btn {
+            background: transparent;
+            border: 2px solid var(--text-secondary);
+            color: var(--text-secondary);
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-family: inherit;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .reset-btn:hover {
+            border-color: var(--accent-win);
+            color: var(--accent-win);
+            box-shadow: 0 0 15px rgba(0, 217, 255, 0.3);
+        }
+
+        /* 説明テキスト */
+        .instructions {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-top: 20px;
+            opacity: 0.7;
+        }
+
+        /* レスポンシブ */
+        @media (max-width: 500px) {
+            .game-container {
+                padding: 25px;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .hand-btn {
+                width: 80px;
+                height: 80px;
+                font-size: 40px;
+            }
+
+            .hand-display {
+                font-size: 50px;
+            }
+
+            .scoreboard {
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background">
+        <div class="floating-shape">✊</div>
+        <div class="floating-shape">✌️</div>
+        <div class="floating-shape">🖐️</div>
+    </div>
+
+    <div class="game-container">
+        <h1>✨ じゃんけん ✨</h1>
+        <p class="subtitle">コンピュータと勝負だ！</p>
+
+        <!-- スコアボード -->
+        <div class="scoreboard">
+            <div class="score-item">
+                <div class="score-label">勝ち</div>
+                <div class="score-value wins" id="wins">0</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">負け</div>
+                <div class="score-value losses" id="losses">0</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">あいこ</div>
+                <div class="score-value draws" id="draws">0</div>
+            </div>
+        </div>
+
+        <!-- バトルエリア -->
+        <div class="battle-area">
+            <div class="player-side">
+                <div class="side-label">あなた</div>
+                <div class="hand-display" id="playerHand">❓</div>
+            </div>
+            <div class="vs-text">VS</div>
+            <div class="computer-side">
+                <div class="side-label">コンピュータ</div>
+                <div class="hand-display" id="computerHand">❓</div>
+            </div>
+        </div>
+
+        <!-- 結果表示 -->
+        <div class="result" id="result"></div>
+
+        <!-- ボタン -->
+        <div class="buttons">
+            <button class="hand-btn" onclick="play('rock')" id="btn-rock">
+                <span>✊</span>
+            </button>
+            <button class="hand-btn" onclick="play('scissors')" id="btn-scissors">
+                <span>✌️</span>
+            </button>
+            <button class="hand-btn" onclick="play('paper')" id="btn-paper">
+                <span>🖐️</span>
+            </button>
+        </div>
+
+        <button class="reset-btn" onclick="resetGame()">スコアをリセット</button>
+
+        <p class="instructions">グー・チョキ・パーのボタンを押して勝負！</p>
+    </div>
+
+    <script>
+        // ===== 効果音システム =====
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        // 音声コンテキストを初期化（ユーザー操作後に呼び出す）
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
+            }
+        }
+
+        // 効果音を再生
+        function playSound(type) {
+            initAudio();
+            if (!audioCtx) return;
+
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+
+            switch(type) {
+                case 'click':
+                    // クリック音: 短い「ポン」
+                    oscillator.frequency.setValueAtTime(800, now);
+                    oscillator.frequency.exponentialRampToValueAtTime(400, now + 0.1);
+                    gainNode.gain.setValueAtTime(0.3, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                    oscillator.start(now);
+                    oscillator.stop(now + 0.1);
+                    break;
+
+                case 'shake':
+                    // シェイク音: 「じゃんけん」のリズム
+                    oscillator.frequency.setValueAtTime(300, now);
+                    oscillator.frequency.setValueAtTime(350, now + 0.1);
+                    oscillator.frequency.setValueAtTime(400, now + 0.2);
+                    gainNode.gain.setValueAtTime(0.2, now);
+                    gainNode.gain.setValueAtTime(0.25, now + 0.1);
+                    gainNode.gain.setValueAtTime(0.3, now + 0.2);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                    oscillator.start(now);
+                    oscillator.stop(now + 0.4);
+                    break;
+
+                case 'win':
+                    // 勝ち: 明るいファンファーレ
+                    oscillator.type = 'triangle';
+                    oscillator.frequency.setValueAtTime(523, now);      // ド
+                    oscillator.frequency.setValueAtTime(659, now + 0.1); // ミ
+                    oscillator.frequency.setValueAtTime(784, now + 0.2); // ソ
+                    oscillator.frequency.setValueAtTime(1047, now + 0.3); // 高いド
+                    gainNode.gain.setValueAtTime(0.4, now);
+                    gainNode.gain.setValueAtTime(0.4, now + 0.4);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+                    oscillator.start(now);
+                    oscillator.stop(now + 0.6);
+                    break;
+
+                case 'lose':
+                    // 負け: 下降する残念な音
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(400, now);
+                    oscillator.frequency.exponentialRampToValueAtTime(150, now + 0.4);
+                    gainNode.gain.setValueAtTime(0.3, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                    oscillator.start(now);
+                    oscillator.stop(now + 0.5);
+                    break;
+
+                case 'draw':
+                    // あいこ: 同じ音が2回
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(440, now);
+                    oscillator.frequency.setValueAtTime(440, now + 0.15);
+                    gainNode.gain.setValueAtTime(0.3, now);
+                    gainNode.gain.setValueAtTime(0.01, now + 0.1);
+                    gainNode.gain.setValueAtTime(0.3, now + 0.15);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    oscillator.start(now);
+                    oscillator.stop(now + 0.3);
+                    break;
+
+                case 'reset':
+                    // リセット: キラキラ
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(1000, now);
+                    oscillator.frequency.exponentialRampToValueAtTime(2000, now + 0.2);
+                    gainNode.gain.setValueAtTime(0.2, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    oscillator.start(now);
+                    oscillator.stop(now + 0.3);
+                    break;
+            }
+        }
+
+        // ===== ゲームの状態 =====
+        let scores = {
+            wins: 0,
+            losses: 0,
+            draws: 0
+        };
+
+        // 手の絵文字
+        const hands = {
+            rock: '✊',
+            scissors: '✌️',
+            paper: '🖐️'
+        };
+
+        // 手の日本語名
+        const handNames = {
+            rock: 'グー',
+            scissors: 'チョキ',
+            paper: 'パー'
+        };
+
+        // ゲームをプレイ
+        function play(playerChoice) {
+            // クリック音を再生
+            playSound('click');
+
+            // ボタンを一時的に無効化
+            const buttons = document.querySelectorAll('.hand-btn');
+            buttons.forEach(btn => btn.disabled = true);
+
+            // コンピュータの手をランダムに選択
+            const choices = ['rock', 'scissors', 'paper'];
+            const computerChoice = choices[Math.floor(Math.random() * 3)];
+
+            // 手を表示
+            const playerHand = document.getElementById('playerHand');
+            const computerHand = document.getElementById('computerHand');
+            const result = document.getElementById('result');
+
+            // アニメーション用にリセット
+            playerHand.classList.remove('shake');
+            computerHand.classList.remove('shake');
+            result.className = 'result';
+            result.textContent = '';
+
+            // シェイクアニメーション
+            playerHand.textContent = '✊';
+            computerHand.textContent = '✊';
+            playerHand.classList.add('shake');
+            computerHand.classList.add('shake');
+
+            // シェイク音を再生
+            playSound('shake');
+
+            // 結果を表示（アニメーション後）
+            setTimeout(() => {
+                playerHand.textContent = hands[playerChoice];
+                computerHand.textContent = hands[computerChoice];
+
+                // 勝敗判定
+                const outcome = getOutcome(playerChoice, computerChoice);
+                
+                setTimeout(() => {
+                    if (outcome === 'win') {
+                        scores.wins++;
+                        result.textContent = '🎉 勝ち！';
+                        result.className = 'result win';
+                        playSound('win');  // 勝利音
+                    } else if (outcome === 'lose') {
+                        scores.losses++;
+                        result.textContent = '😢 負け...';
+                        result.className = 'result lose';
+                        playSound('lose');  // 負け音
+                    } else {
+                        scores.draws++;
+                        result.textContent = '🤝 あいこ！';
+                        result.className = 'result draw';
+                        playSound('draw');  // あいこ音
+                    }
+
+                    updateScores();
+                    
+                    // ボタンを再度有効化
+                    buttons.forEach(btn => btn.disabled = false);
+                }, 200);
+            }, 500);
+        }
+
+        // 勝敗判定
+        function getOutcome(player, computer) {
+            if (player === computer) {
+                return 'draw';
+            }
+            
+            if (
+                (player === 'rock' && computer === 'scissors') ||
+                (player === 'scissors' && computer === 'paper') ||
+                (player === 'paper' && computer === 'rock')
+            ) {
+                return 'win';
+            }
+            
+            return 'lose';
+        }
+
+        // スコア更新
+        function updateScores() {
+            document.getElementById('wins').textContent = scores.wins;
+            document.getElementById('losses').textContent = scores.losses;
+            document.getElementById('draws').textContent = scores.draws;
+        }
+
+        // リセット
+        function resetGame() {
+            playSound('reset');  // リセット音
+            scores = { wins: 0, losses: 0, draws: 0 };
+            updateScores();
+            
+            document.getElementById('playerHand').textContent = '❓';
+            document.getElementById('computerHand').textContent = '❓';
+            document.getElementById('result').textContent = '';
+            document.getElementById('result').className = 'result';
+        }
+    </script>
+</body>
+</html>
+
