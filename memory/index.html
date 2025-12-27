@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Memory Flash</title>
+  <style>
+    :root{
+      --bg:#0b0f17; --panel:#111a2b; --panel2:#0f1626;
+      --text:#e7ecff; --muted:#9aa6c3;
+      --accent:#7c5cff; --good:#35d07f; --bad:#ff4d6d; --warn:#ffd166;
+      --shadow: 0 12px 40px rgba(0,0,0,.35);
+      --r:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
+      background: radial-gradient(1200px 700px at 20% 0%, #1b2a5a 0%, var(--bg) 55%),
+                  radial-gradient(900px 600px at 100% 30%, #3a1b5a 0%, transparent 55%),
+                  var(--bg);
+      color:var(--text);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+    .app{
+      width:min(980px, 100%);
+      display:grid;
+      grid-template-columns: 340px 1fr;
+      gap:16px;
+    }
+    @media (max-width: 860px){
+      .app{grid-template-columns:1fr}
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:var(--r);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .pad{padding:18px}
+    h1{font-size:18px; margin:0 0 6px}
+    .sub{color:var(--muted); font-size:13px; line-height:1.5}
+    .row{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
+    button{
+      appearance:none; border:none; cursor:pointer;
+      background: rgba(124,92,255,.18);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:14px;
+      font-weight:700;
+      border:1px solid rgba(124,92,255,.35);
+      transition: transform .06s ease, background .15s ease, border-color .15s ease;
+    }
+    button:hover{transform: translateY(-1px); background: rgba(124,92,255,.26)}
+    button:active{transform: translateY(0px) scale(.99)}
+    button:disabled{
+      opacity:.45; cursor:not-allowed; transform:none;
+    }
+    .ghost{
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+    }
+    .danger{
+      background: rgba(255,77,109,.14);
+      border-color: rgba(255,77,109,.28);
+    }
+    .stats{
+      display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px;
+    }
+    .stat{
+      background: rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:14px;
+      padding:10px 12px;
+    }
+    .stat .k{color:var(--muted); font-size:12px}
+    .stat .v{font-size:18px; font-weight:800; margin-top:2px}
+    .msg{
+      margin-top:12px;
+      padding:10px 12px;
+      background: rgba(0,0,0,.20);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:14px;
+      line-height:1.5;
+      font-size:13px;
+    }
+    .msg.good{border-color: rgba(53,208,127,.35)}
+    .msg.bad{border-color: rgba(255,77,109,.35)}
+    .msg.warn{border-color: rgba(255,209,102,.35)}
+    .board{
+      padding:18px;
+      background: linear-gradient(180deg, rgba(0,0,0,.22), rgba(0,0,0,.10));
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap:12px;
+    }
+    @media (max-width: 520px){
+      .grid{grid-template-columns: repeat(3, minmax(0, 1fr))}
+    }
+    .tile{
+      user-select:none;
+      height:92px;
+      border-radius:18px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:34px;
+      font-weight:900;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.10);
+      box-shadow: 0 10px 18px rgba(0,0,0,.18);
+      transition: transform .08s ease, background .18s ease, border-color .18s ease;
+    }
+    .tile:active{transform: scale(.99)}
+    .tile.disabled{opacity:.55; pointer-events:none}
+    .tile.flash{
+      background: rgba(124,92,255,.26);
+      border-color: rgba(124,92,255,.50);
+      transform: translateY(-2px);
+    }
+    .tile.pick{
+      background: rgba(53,208,127,.18);
+      border-color: rgba(53,208,127,.40);
+    }
+    .tile.wrong{
+      background: rgba(255,77,109,.18);
+      border-color: rgba(255,77,109,.40);
+    }
+    .footerHint{
+      margin-top:10px;
+      color: var(--muted);
+      font-size:12px;
+      text-align:right;
+    }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      font-size:12px;
+      color:var(--muted);
+      margin-top:10px;
+    }
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      background: rgba(0,0,0,.25);
+      border:1px solid rgba(255,255,255,.10);
+      padding:2px 6px;
+      border-radius:8px;
+      color: var(--text);
+      font-weight:700;
+      font-size:12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="card pad">
+      <h1>Memory Flash</h1>
+      <div class="sub">
+        3秒だけ表示される順番を覚えて、同じ順で押すゲーム。<br>
+        失敗するとレベル1から。君の脳内RAMを測るやつ。
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="k">レベル</div><div class="v" id="level">1</div></div>
+        <div class="stat"><div class="k">最高レベル</div><div class="v" id="best">1</div></div>
+        <div class="stat"><div class="k">ステータス</div><div class="v" id="status">待機</div></div>
+        <div class="stat"><div class="k">入力</div><div class="v" id="progress">0/0</div></div>
+      </div>
+
+      <div class="row">
+        <button id="startBtn">スタート</button>
+        <button id="nextBtn" class="ghost" disabled>次のレベル</button>
+        <button id="retryBtn" class="danger">リセット</button>
+      </div>
+
+      <div id="message" class="msg warn">スタートを押すと、順番が光ります。見終わったら同じ順で押してね。</div>
+
+      <div class="pill">
+        操作: クリック / タップ　
+        <span class="kbd">R</span>でリセット
+      </div>
+    </section>
+
+    <section class="card board">
+      <div class="grid" id="grid"></div>
+      <div class="footerHint">※音はまだ無い。次の強化で入れよう。</div>
+    </section>
+  </div>
+
+  <script>
+    // ====== 設定 ======
+    const EMOJIS = ["🍓","🍋","🍇","🍉","🍒","🥝","🍑","🍍","🍎","🍌","🥥","🫐"];
+    const GRID_SIZE = 12;          // 12タイル
+    const FLASH_MS = 420;          // 1回光る時間
+    const GAP_MS = 140;            // 光りの間隔
+    const SHOW_COUNT_BASE = 3;     // レベル1の表示数（3つ）
+    const SHOW_COUNT_CAP = 9;      // 最大表示数
+    const PREVIEW_WAIT_MS = 450;   // スタート後、点滅開始まで少し待つ
+
+    // ====== 状態 ======
+    const state = {
+      level: 1,
+      best: 1,
+      phase: "idle", // idle | preview | input | clear | fail
+      sequence: [],
+      inputIndex: 0,
+      locked: false
+    };
+
+    // ====== DOM ======
+    const gridEl = document.getElementById("grid");
+    const levelEl = document.getElementById("level");
+    const bestEl  = document.getElementById("best");
+    const statusEl= document.getElementById("status");
+    const progressEl = document.getElementById("progress");
+    const msgEl = document.getElementById("message");
+    const startBtn = document.getElementById("startBtn");
+    const nextBtn  = document.getElementById("nextBtn");
+    const retryBtn = document.getElementById("retryBtn");
+
+    const tiles = [];
+
+    function setMessage(text, kind="warn"){
+      msgEl.className = "msg " + kind;
+      msgEl.textContent = text;
+    }
+
+    function setPhase(phase){
+      state.phase = phase;
+      statusEl.textContent =
+        phase === "idle" ? "待機" :
+        phase === "preview" ? "表示中" :
+        phase === "input" ? "入力中" :
+        phase === "clear" ? "クリア" :
+        phase === "fail" ? "失敗" : phase;
+      const canClick = (phase === "input");
+      tiles.forEach(t => {
+        t.el.classList.toggle("disabled", !canClick);
+      });
+      startBtn.disabled = !(phase === "idle");
+      nextBtn.disabled = !(phase === "clear");
+    }
+
+    function updateUI(){
+      levelEl.textContent = state.level;
+      bestEl.textContent  = state.best;
+      progressEl.textContent = `${state.inputIndex}/${state.sequence.length}`;
+    }
+
+    function pickCountForLevel(level){
+      const n = Math.min(SHOW_COUNT_BASE + (level - 1), SHOW_COUNT_CAP);
+      return n;
+    }
+
+    function makeSequence(count){
+      const seq = [];
+      for (let i=0; i<count; i++){
+        const idx = Math.floor(Math.random() * GRID_SIZE);
+        seq.push(idx);
+      }
+      return seq;
+    }
+
+    function clearTileClasses(){
+      tiles.forEach(t=>{
+        t.el.classList.remove("flash","pick","wrong");
+      });
+    }
+
+    function flashTile(i){
+      const t = tiles[i];
+      t.el.classList.add("flash");
+      setTimeout(()=> t.el.classList.remove("flash"), FLASH_MS);
+    }
+
+    async function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
+
+    async function previewSequence(){
+      setPhase("preview");
+      clearTileClasses();
+      state.inputIndex = 0;
+      updateUI();
+
+      await sleep(PREVIEW_WAIT_MS);
+
+      for (let i=0; i<state.sequence.length; i++){
+        flashTile(state.sequence[i]);
+        await sleep(FLASH_MS + GAP_MS);
+      }
+
+      setPhase("input");
+      setMessage("OK！同じ順で押してね。", "warn");
+      updateUI();
+    }
+
+    function startLevel(){
+      const count = pickCountForLevel(state.level);
+      state.sequence = makeSequence(count);
+      state.inputIndex = 0;
+      setMessage(`レベル${state.level}：${count}個の順番を覚えてね。`, "warn");
+      updateUI();
+      previewSequence();
+    }
+
+    function handlePick(tileIndex){
+      if (state.phase !== "input") return;
+
+      const expected = state.sequence[state.inputIndex];
+
+      if (tileIndex === expected){
+        tiles[tileIndex].el.classList.add("pick");
+        setTimeout(()=> tiles[tileIndex].el.classList.remove("pick"), 160);
+
+        state.inputIndex++;
+        updateUI();
+
+        if (state.inputIndex >= state.sequence.length){
+          // Clear
+          setPhase("clear");
+          state.best = Math.max(state.best, state.level);
+          bestEl.textContent = state.best;
+          setMessage(`クリア！次のレベルへ行ける。脳が光ってる。`, "good");
+        }
+      } else {
+        tiles[tileIndex].el.classList.add("wrong");
+        setTimeout(()=> tiles[tileIndex].el.classList.remove("wrong"), 220);
+
+        setPhase("fail");
+        setMessage(`残念！正解は「${state.inputIndex+1}番目」が違った。レベル1に戻るよ。`, "bad");
+        // 少し見せてからリセット可能状態へ
+        setTimeout(()=>{
+          state.level = 1;
+          setPhase("idle");
+          setMessage("リセット完了。スタートで再挑戦！", "warn");
+          updateUI();
+        }, 800);
+      }
+    }
+
+    function resetAll(){
+      state.level = 1;
+      state.best = 1;
+      state.sequence = [];
+      state.inputIndex = 0;
+      clearTileClasses();
+      setPhase("idle");
+      setMessage("スタートを押すと、順番が光ります。見終わったら同じ順で押してね。", "warn");
+      updateUI();
+    }
+
+    function nextLevel(){
+      state.level++;
+      setPhase("idle");
+      setMessage("次のレベルに進む準備OK。スタート押してね。", "warn");
+      updateUI();
+    }
+
+    function initGrid(){
+      gridEl.innerHTML = "";
+      tiles.length = 0;
+
+      for (let i=0; i<GRID_SIZE; i++){
+        const el = document.createElement("div");
+        el.className = "tile";
+        el.textContent = EMOJIS[i % EMOJIS.length];
+        el.addEventListener("click", ()=> handlePick(i));
+        gridEl.appendChild(el);
+        tiles.push({el, idx:i});
+      }
+
+      setPhase("idle");
+      updateUI();
+    }
+
+    // buttons
+    startBtn.addEventListener("click", ()=> startLevel());
+    nextBtn.addEventListener("click", ()=> { nextLevel(); startLevel(); });
+    retryBtn.addEventListener("click", ()=> resetAll());
+
+    // keyboard
+    window.addEventListener("keydown", (e)=>{
+      if (e.key.toLowerCase() === "r") resetAll();
+    });
+
+    initGrid();
+    setMessage("スタートを押すと、順番が光ります。見終わったら同じ順で押してね。", "warn");
+  </script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Games | sankaku.blue</title>
+  <meta name="description" content="ブラウザで遊べるミニゲーム集。" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <header class="wrap header">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">🎮</div>
+      <div>
+        <h1>Games</h1>
+        <p>ブラウザで遊べるミニゲーム集（HTML/CSS/JS / Cloudflare Pages）</p>
+      </div>
+    </div>
+    <div class="meta">
+      <a class="chip" href="./GUIDE.md" target="_blank" rel="noreferrer">GUIDE</a>
+      <a class="chip" href="https://github.com/aether14/games" target="_blank" rel="noreferrer">GitHub</a>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="grid" aria-label="ゲーム一覧">
+      <!-- 追加する時は、この <a class="card"> をコピペして増やすだけ -->
+      <a class="card" href="./janken/">
+        <div class="cardTop">
+          <div class="emoji" aria-hidden="true">✊✌️🖐️</div>
+          <div class="badge">PLAY</div>
+        </div>
+        <h2>じゃんけん</h2>
+        <p>効果音つきの定番ミニゲーム。勝敗とスコアを記録。</p>
+        <div class="tags">
+          <span>#クリック</span><span>#効果音</span><span>#スコア</span>
+        </div>
+      </a>
+
+      <!-- memory を作ったら有効化（先に枠だけ置いてOK） -->
+      <a class="card" href="./memory/">
+        <div class="cardTop">
+          <div class="emoji" aria-hidden="true">🧠✨</div>
+          <div class="badge ghost">WIP</div>
+        </div>
+        <h2>Memory Flash</h2>
+        <p>3秒だけ光る順番を覚えて押す。脳内RAM測定。</p>
+        <div class="tags">
+          <span>#記憶</span><span>#レベル</span><span>#反復</span>
+        </div>
+      </a>
+
+      <div class="card placeholder" aria-hidden="true">
+        <div class="cardTop">
+          <div class="emoji">➕</div>
+          <div class="badge ghost">SOON</div>
+        </div>
+        <h2>次のゲーム</h2>
+        <p>フォルダを追加して、カードをコピペして増やすだけ。</p>
+        <div class="tags">
+          <span>#simple</span><span>#fast</span><span>#deploy</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="note">
+      <h3>作り方メモ</h3>
+      <p>
+        <code>games/</code> 直下に <code>game-name/index.html</code> を置いて push すると自動デプロイ。
+        このページはカードのリンクを増やしていくだけで育ちます。
+      </p>
+    </section>
+  </main>
+
+  <footer class="wrap footer">
+    <small>© sankaku.blue / Mini Games Collection</small>
+  </footer>
+</body>
+</html>
